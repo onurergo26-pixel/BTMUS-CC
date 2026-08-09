@@ -1,0 +1,41 @@
+name: BT Music Bridge APK
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: GitHub deposunu indir
+        uses: actions/checkout@v4
+
+      - name: Java 17 kur
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Projeyi ZIP'ten çıkar
+        run: |
+          ZIP=$(find . -maxdepth 1 -type f -iname '*.zip' | head -n 1)
+          echo "Bulunan ZIP: $ZIP"
+          mkdir project
+          unzip -q "$ZIP" -d project
+
+      - name: Gradle kur
+        run: |
+          curl -L -o gradle.zip https://services.gradle.org/distributions/gradle-8.7-bin.zip
+          unzip -q gradle.zip
+          echo "$PWD/gradle-8.7/bin" >> "$GITHUB_PATH"
+
+      - name: APK oluştur
+        run: |
+          gradle -p project assembleDebug --no-daemon --stacktrace
+
+      - name: APK'yı yükle
+        uses: actions/upload-artifact@v4
+        with:
+          name: BTMusicBridge-APK
+          path: project/app/build/outputs/apk/debug/app-debug.apk
